@@ -1,0 +1,13 @@
+# Custom Streamlit theme — a clean, modern dark look (not the default).
+[theme]
+primaryColor = "#7C5CFF"            # violet accent for buttons/sliders
+backgroundColor = "#0E1117"         # app background
+secondaryBackgroundColor = "#161B22"  # cards, sidebar, inputs
+textColor = "#E6EDF3"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+headless = true

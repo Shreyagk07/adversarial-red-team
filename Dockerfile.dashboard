@@ -1,0 +1,24 @@
+# Dashboard image: Streamlit UI.
+#
+# Build:  docker build -f Dockerfile.dashboard -t redteam-dashboard .
+# Run:    docker run -p 8501:8501 -e BACKEND_URL=http://host.docker.internal:8000 redteam-dashboard
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PORT=8501 \
+    BACKEND_URL=http://127.0.0.1:8000
+
+WORKDIR /app
+
+COPY requirements-dashboard.txt .
+RUN pip install --no-cache-dir -r requirements-dashboard.txt
+
+COPY dashboard ./dashboard
+COPY .streamlit ./.streamlit
+
+# Bind to 0.0.0.0 and the platform-provided port. Shell form so $PORT expands.
+CMD streamlit run dashboard/app.py \
+    --server.address 0.0.0.0 \
+    --server.port ${PORT:-8501} \
+    --server.headless true

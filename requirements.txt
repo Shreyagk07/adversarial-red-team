@@ -1,0 +1,45 @@
+# --- Phase 0: backend + config + tests ---------------------------------------
+# Pinned to specific versions for reproducible installs (production-minded).
+# Verified current on PyPI as of 2026-06-28. Later phases append their own
+# pinned deps (LLM/agent libs in Phase 1, Streamlit in Phase 10, etc.).
+
+# Web framework + ASGI server
+fastapi==0.138.0
+uvicorn[standard]==0.49.0
+
+# Settings/validation. pydantic v2 ships with FastAPI; pydantic-settings is
+# the separate package that reads our .env into the typed Settings object.
+pydantic==2.12.3
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+
+# Testing
+pytest==8.3.4
+httpx==0.28.1            # required by fastapi.testclient (Starlette TestClient)
+
+# --- Phase 1: LLM-backed agents ----------------------------------------------
+# Verified current on PyPI as of 2026-06-28. langchain-core is the shared base;
+# the two integration packages are the only providers we wire (Groq default,
+# Gemini fallback). LangGraph is added in Phase 3 when we build the loop.
+langchain-core==1.4.8
+langchain-groq==1.1.2
+langchain-google-genai==4.2.5
+
+# --- Phase 3: multi-agent orchestration --------------------------------------
+# LangGraph drives the Challenger -> Target (-> Judge, Phase 4) state graph.
+langgraph==1.2.6
+
+# --- Phase 7: persistence ----------------------------------------------------
+# SQLAlchemy 2.0 ORM. Runs on SQLite (dev) and Postgres (prod) unchanged.
+SQLAlchemy==2.0.51
+
+# --- Phase 9: observability --------------------------------------------------
+# Langfuse tracing for the multi-agent runs (tokens, latency, cost). Optional
+# at runtime: with no keys configured, tracing is a no-op.
+langfuse==4.11.0
+
+# --- Phase 10: dashboard -----------------------------------------------------
+# Streamlit UI + its HTTP client. (pandas is used for the charts/tables.)
+streamlit==1.58.0
+requests==2.34.2
+pandas==3.0.3

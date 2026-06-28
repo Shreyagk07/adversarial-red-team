@@ -1,0 +1,29 @@
+# Render Infrastructure-as-Code for the backend API (free tier).
+# In the Render dashboard: New + -> Blueprint -> point at this repo. Render
+# reads this file and provisions the service. Set GROQ_API_KEY (and any others)
+# as secret env vars in the dashboard — they're marked sync:false below so they
+# are NOT stored in git.
+#
+# NOTE on persistence: the free tier has an ephemeral filesystem, so the SQLite
+# DB resets on each deploy. For durable history, set DATABASE_URL to a free Neon
+# Postgres URL (the code already supports it — that's the Postgres seam).
+services:
+  - type: web
+    name: redteam-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile.backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: LANGFUSE_PUBLIC_KEY
+        sync: false
+      - key: LANGFUSE_SECRET_KEY
+        sync: false
+      - key: LLM_PROVIDER
+        value: groq
+      - key: ENVIRONMENT
+        value: prod

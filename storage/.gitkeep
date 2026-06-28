@@ -1,0 +1,3 @@
+# This folder will hold the SQLite database (Phase 7) and other local
+# artifacts. Tracked via .gitkeep so the directory exists on a fresh clone;
+# the actual *.db file is git-ignored.

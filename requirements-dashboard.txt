@@ -1,0 +1,7 @@
+# Dashboard-only dependencies (Streamlit UI + HTTP client).
+# Used by Dockerfile.dashboard / Streamlit Community Cloud. The dashboard talks
+# to the backend purely over HTTP, so it needs none of the agent stack.
+
+streamlit==1.58.0
+requests==2.34.2
+pandas==3.0.3

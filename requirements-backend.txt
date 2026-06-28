@@ -1,0 +1,17 @@
+# Backend-only dependencies (FastAPI + agents + persistence + tracing).
+# Used by Dockerfile.backend / Render so the API image stays lean (no Streamlit
+# or pandas). Pins mirror requirements.txt — keep them in sync.
+
+fastapi==0.138.0
+uvicorn[standard]==0.49.0
+pydantic==2.12.3
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+
+langchain-core==1.4.8
+langchain-groq==1.1.2
+langchain-google-genai==4.2.5
+langgraph==1.2.6
+
+SQLAlchemy==2.0.51
+langfuse==4.11.0

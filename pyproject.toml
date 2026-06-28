@@ -1,0 +1,19 @@
+# Project tooling configuration.
+#
+# We keep a single pyproject.toml for tool config (pytest today; linters/type
+# checkers can be added here later) rather than scattering .ini files.
+
+[tool.pytest.ini_options]
+# Only look for tests under tests/ so pytest never tries to import demo
+# scripts or agent modules as test files.
+testpaths = ["tests"]
+
+# By default pytest collects any class named "Test*", which would wrongly try
+# to collect our domain models (`TestCase`, `GeneratedTests`, ... — Pydantic
+# schemas, not tests). Require test *classes* to end in "TestSuite" instead;
+# our tests are plain functions anyway, so this just removes the false-positive
+# collection warnings while leaving a clear convention for any future classes.
+python_classes = ["*TestSuite"]
+
+# Keep test output focused.
+addopts = "-q"

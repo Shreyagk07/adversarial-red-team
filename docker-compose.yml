@@ -1,0 +1,36 @@
+# Local one-command stack: backend + dashboard.
+#
+#   docker compose up --build
+#
+# Backend on http://localhost:8000, dashboard on http://localhost:8501.
+# Put your keys in .env (GROQ_API_KEY etc.); both services read it.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Keep the SQLite DB on a named volume so runs survive restarts.
+      DATABASE_URL: sqlite:////data/redteam.db
+    volumes:
+      - backend_data:/data
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      # Reach the backend by its compose service name.
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:
