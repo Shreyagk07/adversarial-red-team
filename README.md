@@ -2,7 +2,7 @@
 
 **Automated robustness evaluation for AI agents.**
 
-![CI](https://github.com/USERNAME/adversarial-red-team/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Shreyagk07/adversarial-red-team/actions/workflows/ci.yml/badge.svg)
 
 A defensive AI-safety tool. You register a *target* AI agent; the platform
 automatically stress-tests it. A **Challenger** agent generates probing test
