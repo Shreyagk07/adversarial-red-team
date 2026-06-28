@@ -52,6 +52,22 @@ st.set_page_config(
 )
 
 
+def _resolve_backend_url() -> str:
+    """Resolve the backend URL across all deployment targets.
+
+    Priority: Streamlit Cloud secrets -> environment variable -> localhost.
+    Streamlit Community Cloud exposes configured values via ``st.secrets``
+    (not os.environ), so we check there first and fall back gracefully.
+    """
+    try:
+        secret = st.secrets.get("BACKEND_URL")  # raises if no secrets file
+        if secret:
+            return str(secret)
+    except Exception:
+        pass
+    return os.environ.get("BACKEND_URL", DEFAULT_BACKEND)
+
+
 def get_client() -> ApiClient:
     """Build an API client from the sidebar-configured backend URL."""
     return ApiClient(st.session_state.get("backend_url", DEFAULT_BACKEND))
@@ -62,7 +78,7 @@ def sidebar() -> str:
     st.sidebar.title("🛡️ AI Red-Team")
     st.sidebar.caption("Automated robustness evaluation for AI agents")
 
-    st.session_state.setdefault("backend_url", DEFAULT_BACKEND)
+    st.session_state.setdefault("backend_url", _resolve_backend_url())
     st.session_state["backend_url"] = st.sidebar.text_input(
         "Backend URL", value=st.session_state["backend_url"]
     )
