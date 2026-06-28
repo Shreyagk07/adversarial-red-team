@@ -8,6 +8,8 @@ the env-export helper maps settings to the SDK's expected variables.
 from __future__ import annotations
 
 import os
+import sys
+import types
 
 import agents.observability as obs
 from agents.observability import _ensure_env, observe_run, tracing_callbacks
@@ -40,6 +42,53 @@ def test_langfuse_enabled_property() -> None:
     assert Settings(langfuse_public_key="pk", langfuse_secret_key="sk").langfuse_enabled
     assert not Settings(langfuse_public_key="pk").langfuse_enabled
     assert not Settings().langfuse_enabled
+
+
+def test_observe_run_failopen_when_langfuse_errors(monkeypatch) -> None:  # noqa: ANN001
+    """Even with creds set, a broken Langfuse must not break the wrapped work."""
+    fake = types.ModuleType("langfuse")
+
+    def boom():  # get_client that explodes
+        raise RuntimeError("langfuse down")
+
+    fake.get_client = boom
+    monkeypatch.setitem(sys.modules, "langfuse", fake)
+
+    settings = Settings(langfuse_public_key="pk", langfuse_secret_key="sk")
+    ran = False
+    with observe_run("x", settings):
+        ran = True
+    assert ran is True  # body executed despite tracing setup failing
+
+
+def test_observe_run_does_not_swallow_body_errors() -> None:
+    """Fail-open must not hide real exceptions raised inside the block."""
+    settings = Settings(langfuse_public_key=None, langfuse_secret_key=None)
+    try:
+        with observe_run("x", settings):
+            raise ValueError("real error")
+    except ValueError as exc:
+        assert str(exc) == "real error"
+    else:  # pragma: no cover
+        raise AssertionError("observe_run swallowed the body exception")
+
+
+def test_get_handler_failopen_when_callbackhandler_errors(monkeypatch) -> None:  # noqa: ANN001
+    """A CallbackHandler that raises on construction disables tracing, not the app."""
+    _reset_cache()
+    fake = types.ModuleType("langfuse.langchain")
+
+    class CallbackHandler:  # noqa: D401 - test double
+        def __init__(self) -> None:
+            raise RuntimeError("bad keys")
+
+    fake.CallbackHandler = CallbackHandler
+    monkeypatch.setitem(sys.modules, "langfuse.langchain", fake)
+
+    settings = Settings(langfuse_public_key="pk", langfuse_secret_key="sk")
+    assert obs.get_langfuse_handler(settings) is None
+    assert tracing_callbacks(settings) == []
+    _reset_cache()
 
 
 def test_ensure_env_exports_credentials(monkeypatch) -> None:  # noqa: ANN001

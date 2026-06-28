@@ -51,12 +51,12 @@ def get_langfuse_handler(settings: Settings | None = None):
     _ensure_env(settings)
     try:
         from langfuse.langchain import CallbackHandler
-    except ImportError:
-        # Package not installed; tracing simply stays off.
-        _handler = None
-        return None
 
-    _handler = CallbackHandler()
+        _handler = CallbackHandler()
+    except Exception:
+        # Package missing OR handler construction failed (bad keys, etc.).
+        # Tracing must never break the app, so we fail open and disable it.
+        _handler = None
     return _handler
 
 
@@ -70,21 +70,38 @@ def tracing_callbacks(settings: Settings | None = None) -> list:
 def observe_run(name: str, settings: Settings | None = None) -> Iterator[None]:
     """Group all traced calls within the block under one parent span.
 
-    No-op (other than yielding) when Langfuse is disabled. Flushes queued
-    traces on exit so short-lived runs/scripts don't lose data.
+    Fail-open by design: any problem setting up or tearing down tracing is
+    swallowed so the wrapped work always runs. We only guard the Langfuse
+    setup/teardown — never the user's block — so real errors still propagate.
+    Flushes queued traces on exit so short-lived runs don't lose data.
     """
     settings = settings or get_settings()
-    if not settings.langfuse_enabled:
-        yield
-        return
+
+    client = None
+    span = None
+    if settings.langfuse_enabled:
+        try:
+            _ensure_env(settings)
+            from langfuse import get_client
+
+            client = get_client()
+            # NB: langfuse 4.x uses start_as_current_observation, not
+            # start_as_current_span. as_type='span' is the default.
+            span = client.start_as_current_observation(name=name, as_type="span")
+            span.__enter__()
+        except Exception:
+            span = None  # tracing unavailable; carry on without it
 
     try:
-        from langfuse import get_client
-    except ImportError:
         yield
-        return
-
-    client = get_client()
-    with client.start_as_current_span(name=name):
-        yield
-    client.flush()
+    finally:
+        if span is not None:
+            try:
+                span.__exit__(None, None, None)
+            except Exception:
+                pass
+        if client is not None:
+            try:
+                client.flush()
+            except Exception:
+                pass

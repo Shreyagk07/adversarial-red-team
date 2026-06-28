@@ -16,12 +16,20 @@ URL in the sidebar. All backend access goes through dashboard/api_client.py.
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
 from typing import Any
 
-import pandas as pd
-import streamlit as st
+# Ensure the repo root is on sys.path so `dashboard.api_client` resolves no
+# matter how the app is launched. `streamlit run dashboard/app.py` (and
+# Streamlit Community Cloud) put the *script's* directory on sys.path, not the
+# repo root — without this, the import below fails with ModuleNotFoundError.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from dashboard.api_client import ApiClient, ApiError
+import pandas as pd  # noqa: E402 - must follow the sys.path bootstrap above
+import streamlit as st  # noqa: E402
+
+from dashboard.api_client import ApiClient, ApiError  # noqa: E402
 
 DEFAULT_BACKEND = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
 
